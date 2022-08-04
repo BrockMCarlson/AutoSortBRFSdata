@@ -1,0 +1,28 @@
+% setupAutoSortForBRFS
+% BMC 8/3/22
+
+
+%% Find Unique dates (to make sure you have all BRFS files ya dummy)
+cd('T:\Brock - backups\Backup - WD harddrive - 220311\1 brfs ns6 files')
+holder = dir;
+clear fullName dateName
+for i = 3:length(holder)
+    fullName{i,1} = holder(i).name;
+    dateName(i,:) = holder(i).name(1:8);
+end
+uniqueDates = unique(dateName,'rows');
+
+%%
+inputDataDirectory = 'E:\brfsNs6FilesToAutoSort';
+outputPpnevDirectory = 'E:\ppnev_OutputsFromAutoSort';
+
+cd(inputDataDirectory)
+filename = '151221_E_brfs001.ns6';
+multiplier = 2.2;
+
+
+[ppNEV, WAVES] = offlineBRAutoSort(filename,multiplier);
+
+
+cd(outputPpnevDirectory)
+save('testPpnevOutput.mat','ppNEV','WAVES')

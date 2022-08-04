@@ -99,7 +99,6 @@ for e = 1:length(ConnectorBank)
     
     % - The signal is downsampled by 3 to match envelope
     noise = downsample(noise,3);
-    noise = single(noise); % Variable size is reduced due to memory issues (64GB ram on Lenovo ThinkPad memory limit reached by electrode 15)
     
     % - The noise level is multiplied by the noise multiplier (default 2.2)
     noise = noise .* multiplier;
@@ -141,20 +140,16 @@ for e = 1:length(ConnectorBank)
     elec = zeros(1,length(spk)); elec(:) = NS.ElectrodesInfo.ElectrodeID;
 
     % store
-% %     TimeStamp = [TimeStamp spk]; 
-% %     Electrode = [Electrode elec]; 
+    TimeStamp = [TimeStamp spk]; 
+    Electrode = [Electrode elec]; 
 %     WAVES     = [WAVES, wave];
-    TimeStamp{e} = spk; 
-    Electrode{e} = elec; 
     WAVES{e}     = wave;
     
 %  ENV(e,:)   = env;  
 %  NOISE(e,:) = noise; 
-
-clear spk elec wave
  
 end
-
+holdUpRightHere
 Unit = ones(size(TimeStamp));
 [TimeStamp,idx] = sort(TimeStamp);
 Electrode = Electrode(idx);
