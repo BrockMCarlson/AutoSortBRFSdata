@@ -1,4 +1,4 @@
-function [ppNEV, WAVES] = offlineBRAutoSort(filename,multiplier)
+function offlineBRAutoSort(filename,multiplier,inputDataDirectory,outputPpnevDirectory)
 
 % Spikes are detected using an envelope detector that is based on first
 % calculating the amount of noise in the signal and applying a multiplier
@@ -14,13 +14,17 @@ win   = -30:30;
 % [pathstr,name,~] = fileparts(filename); 
 % filename = [pathstr filesep name]; 
 % NS6_header = openNSx([filename '.ns6'],'noread');
+cd(inputDataDirectory)
 NS6_header = openNSx(filename,'noread');
 ConnectorBank = {NS6_header.ElectrodesInfo.ConnectorBank};
 
 
-TimeStamp = []; Electrode = []; 
-% WAVES = []; 
-WAVES = cell(length(ConnectorBank));
+cd(outputPpnevDirectory)
+saveName = strcat(filename(1:end-4),'.mat');
+empty = struct;
+save(saveName,'empty','-v7.3')
+writeObject = matfile(saveName,'Writable',true);
+
 for e = 1:length(ConnectorBank)
     
     displayText = strcat('starting Electrode Number',string(e));
@@ -32,26 +36,25 @@ for e = 1:length(ConnectorBank)
     
     clear electrode NS x env noise
     
+    cd(inputDataDirectory)
     electrode = sprintf('c:%u',e);
-%     NS = openNSx([filename '.ns6'],electrode,'read');
     NS = openNSx(filename, electrode,'read');
     if iscell(NS.Data)
         NS.Data =  cell2mat(NS.Data);
     end
+    electrodeID = NS.ElectrodesInfo.ElectrodeID;
     x = double(NS.Data)';
     Fs = double(NS.MetaTags.SamplingFreq);
     nyq = Fs/2;
     
+    clear NS
+
     if e == 1
         % Calculating the time vector
         clear TM
         TM = 1:length(x);
         TM = downsample(TM,2);
         TM = downsample(TM,3);
-        
-%         clear ENV NOISE
-%         ENV   = zeros(length(ConnectorBank),length(TM));
-%         NOISE = zeros(length(ConnectorBank),length(TM));
     end
     
     
@@ -108,81 +111,76 @@ for e = 1:length(ConnectorBank)
     % Calculating spikes and extract spike waves;
     clear spk
     spk  = TM(env>noise);
-    clear env noise wave
-    wave = nan(numel(win),length(spk));
+    clear env noise 
     for i = 1:length(spk)
-        
         w = spk(i) + swin;
         if any(w<1) || any(w>length(x))
             continue
         end
-        
         dat     = x(spk(i) + swin);
         if all(dat == 0)
             continue
         end
-        
         % align wave on max slope
-        v       = diff(dat); 
-        [~,mi]  = max(v);
-        mi      = swin(mi);
-        spk(i)  = spk(i) + mi;
-        
-        w       = spk(i) + win; 
-        if any(w<1) || any(w>length(x))
-            continue
-        end
-        wave(:,i) = x(spk(i) + win) - x(spk(i));
-        
+            v       = diff(dat); 
+            [~,mi]  = max(v);
+            mi      = swin(mi);
+            spk(i)  = spk(i) + mi;
+            w       = spk(i) + win; 
+            if any(w<1) || any(w>length(x))
+                continue
+            end
     end
     % get rid of redundant spikes (new 7/25/17)
     [spk, ui, ~] = unique(spk); 
-    wave = wave(:,ui); 
-    elec = zeros(1,length(spk)); elec(:) = NS.ElectrodesInfo.ElectrodeID;
+    elec = zeros(1,length(spk)); 
+    elec(:) = electrodeID;
 
     % store
-% %     TimeStamp = [TimeStamp spk]; 
-% %     Electrode = [Electrode elec]; 
-%     WAVES     = [WAVES, wave];
-    TimeStamp{e} = spk; 
-    Electrode{e} = elec; 
-    WAVES{e}     = wave;
-    
-%  ENV(e,:)   = env;  
-%  NOISE(e,:) = noise; 
+    % store
+    cd(outputPpnevDirectory)
+    spkVarName = strcat('spk',string(e)); %formely TimeStamp
+    writeObject.(spkVarName) = spk;
+    elecVarName = strcat('elec',string(e)); %formerly Electrode
+    writeObject.(elecVarName)  = elec; 
 
-clear spk elec wave
+    
+
+
+clear spk elec 
  
 end
+end
 
-Unit = ones(size(TimeStamp));
-[TimeStamp,idx] = sort(TimeStamp);
-Electrode = Electrode(idx);
-WAVES = WAVES(:,idx); 
-
-% load NEV
-clear NEV ppNEV
-NEV = openNEV(strcat(filename,'.nev'),'noread','nomat','nosave');
-
-% organize ppNEV structure for outpu
-ppNEV.MetaTags             = NEV.MetaTags; 
-ppNEV.ElectrodesInfo       = NEV.ElectrodesInfo; 
-ppNEV.Data.SerialDigitalIO = NEV.Data.SerialDigitalIO; 
-clear NEV
-
-ppNEV.Data.Spikes.TimeStamp = TimeStamp; 
-ppNEV.Data.Spikes.Electrode = Electrode; 
-ppNEV.Data.Spikes.Unit = Unit; 
-
-ppNEV.filename = filename; 
-ppNEV.multiplier = multiplier; 
-ppNEV.timestamp = now; 
-
-
-
-
-
-
-
-
-
+% % 
+% % Unit = ones(size(TimeStamp));
+% % [TimeStamp,idx] = sort(TimeStamp);
+% % Electrode = Electrode(idx);
+% % WAVES = WAVES(:,idx); 
+% % 
+% % % load NEV
+% % clear NEV ppNEV
+% % NEV = openNEV(strcat(filename,'.nev'),'noread','nomat','nosave');
+% % 
+% % % organize ppNEV structure for outpu
+% % ppNEV.MetaTags             = NEV.MetaTags; 
+% % ppNEV.ElectrodesInfo       = NEV.ElectrodesInfo; 
+% % ppNEV.Data.SerialDigitalIO = NEV.Data.SerialDigitalIO; 
+% % clear NEV
+% % 
+% % ppNEV.Data.Spikes.TimeStamp = TimeStamp; 
+% % ppNEV.Data.Spikes.Electrode = Electrode; 
+% % ppNEV.Data.Spikes.Unit = Unit; 
+% % 
+% % ppNEV.filename = filename; 
+% % ppNEV.multiplier = multiplier; 
+% % ppNEV.timestamp = now; 
+% % 
+% % 
+% % 
+% % 
+% % 
+% % 
+% % 
+% % 
+% % 
