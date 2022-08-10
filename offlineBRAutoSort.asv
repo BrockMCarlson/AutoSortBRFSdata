@@ -156,7 +156,7 @@ end
 % % Unit = ones(size(TimeStamp));
 % % [TimeStamp,idx] = sort(TimeStamp);
 % % Electrode = Electrode(idx);
-% % WAVES = WAVES(:,idx); 
+WAVES = WAVES(:,idx); 
 % % 
 % % % load NEV
 % % clear NEV ppNEV

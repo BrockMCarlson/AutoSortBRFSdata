@@ -23,7 +23,8 @@ list = dir(inputDataDirectory);
 fileList = {list.name}.';
 fileList = fileList(3:end,1);
 
-for i = 1:length(fileList)
+% for i = 1:length(fileList)
+for i = [15]
     cd(inputDataDirectory)
     filename = fileList{i};
     multiplier = 1.5; % default is 2.2
