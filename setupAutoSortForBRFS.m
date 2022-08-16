@@ -10,6 +10,35 @@ cd(CODEDIR)
 inputDataDirectory = 'D:\all BRFS';
 outputPpnevDirectory = 'E:\AutoSortOutput - HOME';
 
+%% Find Unique dates 
+clear uniqueDates
+
+% 
+
+
+% allBRFS
+cd('D:\all BRFS')
+holder = dir;
+clear fullName dateName
+for i = 3:length(holder)
+    fullName{i,1} = holder(i).name;
+    dateName(i,:) = holder(i).name(1:8);
+end
+uniqueDates.allBRFS = unique(dateName,'rows');
+
+% diSTIM - adaptdcos&CRF\AutoSort-ed
+cd('T:\diSTIM - adaptdcos&CRF\AutoSort-ed')
+holder = dir;
+clear fullName dateName
+for i = 3:length(holder)
+    fullName{i,1} = holder(i).name;
+    dateName(i,:) = holder(i).name(1:8);
+end
+uniqueDates.currentFiles = unique(dateName,'rows');
+
+test = ismember(uniqueDates.allBRFS,uniqueDates.currentFiles,'rows');
+missingDates = uniqueDates.allBRFS()
+
 %% Make list of all rfori and brfs files
 % What info do I want? -- 
 % I would like a list of all ns6 files to autosort. I do NOT need the same
@@ -61,12 +90,4 @@ end
 
 
 
-%% Find Unique dates (to make sure you have all BRFS files ya dummy)
-% % cd('T:\Brock - backups\Backup - WD harddrive - 220311\1 brfs ns6 files')
-% % holder = dir;
-% % clear fullName dateName
-% % for i = 3:length(holder)
-% %     fullName{i,1} = holder(i).name;
-% %     dateName(i,:) = holder(i).name(1:8);
-% % end
-% % uniqueDates = unique(dateName,'rows');
+
